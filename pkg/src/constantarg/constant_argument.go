@@ -1,4 +1,4 @@
-package go_form3_custom_linter
+package constantarg
 
 import (
 	"go/ast"
@@ -7,31 +7,24 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-var Analyzer = &analysis.Analyzer{
-	Name:     "customlint",
-	Doc:      "Checks for usages of custom code issues",
+var ConstantArgumentAnalyzer = &analysis.Analyzer{
+	Name:     "constantarg",
+	Doc:      "Checks for usages of arguments with non-constant values in function call",
 	Run:      run,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
-	expressionNodeFilter := []ast.Node{ // filter needed nodes: visit only them
+	//go analysis will populate the `pass.ResultOf` map with the prerequisite analyzers
+	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	nodeFilter := []ast.Node{ // filter needed nodes: visit only them
 		(*ast.CallExpr)(nil),
 	}
-	pass.ResultOf[inspect.Analyzer].(*inspector.Inspector).Preorder(expressionNodeFilter, func(node ast.Node) {
+	inspect.Preorder(nodeFilter, func(node ast.Node) {
 		call := node.(*ast.CallExpr) // node is always a CallExpr thanks to nodeFilter
 
-		// a sample check to identify usages of time.Sleep()
-		if expr, ok := call.Fun.(*ast.SelectorExpr); ok {
-			if ident, ok := expr.X.(*ast.Ident); ok {
-				if ident.Name == "time" && expr.Sel.Name == "Sleep" {
-					pass.Reportf(node.Pos(), "no-sleep-lint")
-				}
-			}
-		}
-
 		// a sample check for identifying log.WithField usages with 'field' (1st) argument as non-constant
-		isArgumentConstant(pass, node, call, "log", "WithField", 0, "no-log-withField-lint")
+		isArgumentConstant(pass, node, call, "log", "WithField", 0, "log-withField")
 
 		return
 	})

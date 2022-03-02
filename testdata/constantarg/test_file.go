@@ -1,23 +1,19 @@
-package testdata
+package constantarg
 
 import (
 	"log"
-	"time"
 )
 
-func doesNotSleep() {
-}
-
-func sleeps() {
-	time.Sleep(1 * time.Nanosecond) //want "no-sleep-lint"
+func constantArgumentAnalyzerData() {
 
 	const renownedConstant = "ConstantField"
 	justAnotherVariable := "i am a variable!"
 
 	log := log2{}
-	log.WithField("Field1", "Value1")            //want "no-log-withField-lint"
-	log.WithField(justAnotherVariable, "Value1") //want "no-log-withField-lint"
+	log.WithField("Field1", "Value1")            //want "log-withField"
+	log.WithField(justAnotherVariable, "Value1") //want "log-withField"
 	log.WithField(renownedConstant, "Value1")
+
 }
 
 type log2 struct {
